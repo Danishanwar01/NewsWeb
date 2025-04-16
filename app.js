@@ -1,8 +1,11 @@
+
+
+
 // --------------------
-// Step 1: Load environment variables from .env (for both local and production)
+// Load environment variables
 // --------------------
 require('dotenv').config();
-require("./db/conn"); // Ensure your connection code uses process.env.MONGO_URI there
+require("./db/conn"); // Ensure this file reads process.env.MONGO_URI
 
 const express = require('express');
 const cors = require('cors');
@@ -17,11 +20,9 @@ const Carousel = require('./models/Carousel');
 const app = express();
 
 // --------------------
-// Step 2: Use PORT and MONGO_URI from the environment variables
+// Get PORT from environment; default to 5000 if not set
 // --------------------
 const PORT = process.env.PORT || 5000;
-// const MONGO_URI = process.env.MONGO_URI; 
-// (Usually used in your "db/conn" file; make sure that file reads process.env.MONGO_URI)
 
 // --------------------
 // Middlewares
@@ -30,7 +31,7 @@ app.use(express.json());
 app.use(cors());
 
 // --------------------
-// Uploads Folder Setup
+// Set up uploads folder
 // --------------------
 const uploadsPath = path.join(__dirname, 'uploads');
 
@@ -54,8 +55,10 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // --------------------
-// ADMIN LOGIN
+// API Routes (Admin, Articles, Carousel, etc.)
 // --------------------
+
+// ADMIN LOGIN
 app.post("/admin/login", async (req, res) => {
   console.log("Admin Login API called");
   const { name, password } = req.body;
@@ -63,18 +66,14 @@ app.post("/admin/login", async (req, res) => {
   try {
     const admin = await Admin.findOne({ name });
     console.log("Admin found:", admin);
-
     if (!admin) {
       return res.status(400).json({ message: "Admin not found" });
     }
-
     const isMatch = await bcrypt.compare(password, admin.password);
     console.log("Passwords match:", isMatch);
-
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
-
     res.status(200).json({ message: "Login successful", role: "admin", name: admin.name });
   } catch (error) {
     console.error("Login error:", error);
@@ -82,23 +81,18 @@ app.post("/admin/login", async (req, res) => {
   }
 });
 
-// --------------------
 // POST ARTICLE
-// --------------------
 app.post('/admin/dashboard/add-article', upload.single('image'), async (req, res) => {
   try {
     const { title, category, content } = req.body;
-
     if (!title || !category || !content) {
       return res.status(400).json({ message: 'All fields are required' });
     }
-
     const newArticle = new Article({ title, category, content });
     if (req.file) {
       newArticle.image = req.file.filename;
     }
     await newArticle.save();
-
     res.status(200).json({ message: 'Article added successfully' });
   } catch (err) {
     console.error('Error adding article:', err);
@@ -106,9 +100,7 @@ app.post('/admin/dashboard/add-article', upload.single('image'), async (req, res
   }
 });
 
-// --------------------
 // GET ALL ARTICLES
-// --------------------
 app.get('/admin/dashboard/all-articles', async (req, res) => {
   console.log("GET /admin/dashboard/all-articles called");
   try {
@@ -121,6 +113,8 @@ app.get('/admin/dashboard/all-articles', async (req, res) => {
   }
 });
 
+// Other routes for DELETE, UPDATE ARTICLE, and Carousel endpoints...
+// (Keep them unchanged as in your original code.)
 // --------------------
 // DELETE ARTICLE
 // --------------------
@@ -269,21 +263,22 @@ app.get('/admin/dashboard/article/:id', async (req, res) => {
   }
 });
 
+
+
 // --------------------
 // Production: Serve React App static files
 // --------------------
-// Adjust the path if your frontend build output is in a different folder.
-// For example, if your built frontend is in "the-awaz/build", change 'client' to 'the-awaz'.
 if (process.env.NODE_ENV === 'production') {
+  // Assuming your built frontend is located in the-awaz/build relative to project root.
   app.use(express.static(path.join(__dirname, '..', 'the-awaz', 'build')));
+  
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'the-awaz', 'build', 'index.html'));
   });
-  
 }
 
 // --------------------
-// Start the server on the defined PORT
+// Start the server
 // --------------------
 app.listen(PORT, () => {
   console.log(`Server is running in ${process.env.NODE_ENV} mode on port ${PORT}`);
