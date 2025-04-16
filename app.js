@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(cors());
 
 // Define the uploads folder path (one level up from the current folder)
-const uploadsPath = path.join(__dirname, '../uploads');
+const uploadsPath = path.join(__dirname, './uploads');
 
 
 if (!fs.existsSync(uploadsPath)) {

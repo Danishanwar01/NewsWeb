@@ -1,19 +1,16 @@
 const mongoose = require('mongoose');
+require('dotenv').config(); 
 
-mongoose.connect("mongodb://127.0.0.1:27017/the-awaz", {
+const mongoURI = process.env.MONGO_URI;
 
-    useNewUrlParser: true,
-
-    useUnifiedTopology: true
-
-}).then(() => {
-
-    console.log("database is connected")
-
-}).catch((err) => {
-
-    console.log("database is not connected");
-
-    console.log(err);
-
+mongoose.connect(mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
 })
+.then(() => {
+    console.log("Database is connected")
+})
+.catch((err) => {
+    console.log("Database is not connected");
+    console.log(err);
+});
