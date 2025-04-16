@@ -1,4 +1,9 @@
-require("./db/conn");
+// --------------------
+// Step 1: Load environment variables from .env (for both local and production)
+// --------------------
+require('dotenv').config();
+require("./db/conn"); // Ensure your connection code uses process.env.MONGO_URI there
+
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
@@ -11,22 +16,33 @@ const Carousel = require('./models/Carousel');
 
 const app = express();
 
+// --------------------
+// Step 2: Use PORT and MONGO_URI from the environment variables
+// --------------------
+const PORT = process.env.PORT || 5000;
+// const MONGO_URI = process.env.MONGO_URI; 
+// (Usually used in your "db/conn" file; make sure that file reads process.env.MONGO_URI)
+
+// --------------------
 // Middlewares
+// --------------------
 app.use(express.json());
 app.use(cors());
 
-// Define the uploads folder path (one level up from the current folder)
-const uploadsPath = path.join(__dirname, './uploads');
-
+// --------------------
+// Uploads Folder Setup
+// --------------------
+const uploadsPath = path.join(__dirname, 'uploads');
 
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath, { recursive: true });
 }
 
-
 app.use('/uploads', express.static(uploadsPath));
 
+// --------------------
 // Multer configuration for file uploads
+// --------------------
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadsPath);
@@ -78,7 +94,6 @@ app.post('/admin/dashboard/add-article', upload.single('image'), async (req, res
     }
 
     const newArticle = new Article({ title, category, content });
-    // If an image file was uploaded, save its filename in the article document.
     if (req.file) {
       newArticle.image = req.file.filename;
     }
@@ -114,7 +129,6 @@ app.delete('/admin/dashboard/delete-article/:id', async (req, res) => {
     const id = req.params.id;
     const article = await Article.findByIdAndDelete(id);
     if (article && article.image) {
-      // Optionally remove the image file from uploads
       fs.unlink(path.join(uploadsPath, article.image), (err) => {
         if (err) {
           console.error("Error deleting image file:", err);
@@ -142,7 +156,6 @@ app.put('/admin/dashboard/update-article/:id', upload.single('image'), async (re
 
     if (req.file) {
       updateData.image = req.file.filename;
-      // Optionally remove the old image file
       const article = await Article.findById(id);
       if (article && article.image) {
         fs.unlink(path.join(uploadsPath, article.image), (err) => {
@@ -178,9 +191,7 @@ app.get('/admin/dashboard/carousel', async (req, res) => {
   }
 });
 
-// --------------------
 // Add a new carousel item
-// --------------------
 app.post('/admin/dashboard/carousel', upload.single('image'), async (req, res) => {
   try {
     const { title, caption } = req.body;
@@ -199,9 +210,7 @@ app.post('/admin/dashboard/carousel', upload.single('image'), async (req, res) =
   }
 });
 
-// --------------------
 // Update a carousel item by ID
-// --------------------
 app.put('/admin/dashboard/carousel/:id', upload.single('image'), async (req, res) => {
   try {
     const { title, caption } = req.body;
@@ -209,7 +218,6 @@ app.put('/admin/dashboard/carousel/:id', upload.single('image'), async (req, res
 
     if (req.file) {
       updateData.image = req.file.filename;
-      // Optionally, delete the old image file:
       const carouselItem = await Carousel.findById(req.params.id);
       if (carouselItem && carouselItem.image) {
         fs.unlink(path.join(uploadsPath, carouselItem.image), (err) => {
@@ -228,9 +236,7 @@ app.put('/admin/dashboard/carousel/:id', upload.single('image'), async (req, res
   }
 });
 
-// --------------------
 // Delete a carousel item by ID
-// --------------------
 app.delete('/admin/dashboard/carousel/:id', async (req, res) => {
   try {
     const carouselItem = await Carousel.findByIdAndDelete(req.params.id);
@@ -249,9 +255,7 @@ app.delete('/admin/dashboard/carousel/:id', async (req, res) => {
   }
 });
 
-// --------------------
-// GET a single article by ID
-// --------------------
+// Get a single article by ID
 app.get('/admin/dashboard/article/:id', async (req, res) => {
   try {
     const article = await Article.findById(req.params.id);
@@ -266,20 +270,21 @@ app.get('/admin/dashboard/article/:id', async (req, res) => {
 });
 
 // --------------------
-// Serve React App in Production
+// Production: Serve React App static files
 // --------------------
+// Adjust the path if your frontend build output is in a different folder.
+// For example, if your built frontend is in "the-awaz/build", change 'client' to 'the-awaz'.
 if (process.env.NODE_ENV === 'production') {
-
   app.use(express.static(path.join(__dirname, '..', 'the-awaz', 'build')));
-  
-  // For any route not handled by our APIs
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'the-awaz', 'build', 'index.html'));
   });
+  
 }
 
-// Set the port dynamically from environment or default to 5000
-const PORT = process.env.PORT || 5000;
+// --------------------
+// Start the server on the defined PORT
+// --------------------
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
