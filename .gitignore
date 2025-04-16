@@ -1,0 +1,22 @@
+# Node modules folder (dependencies)
+node_modules/
+
+# Environment variables file (Keep it local and private)
+.env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Build output (if applicable)
+build/
+dist/
+
+# Temporary files
+tmp/
+temp/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
