@@ -6,7 +6,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // 2) Import the DB connection function, but don’t start it just yet
-const connectDB = require('./conn');
+const connectDB = require('./db/conn');
 
 const express = require('express');
 const cors = require('cors');
