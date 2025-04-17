@@ -3,7 +3,7 @@ const express = require('express');
 const connectDB = require('./db/conn');
 
 const cors = require('cors');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
